@@ -19,15 +19,11 @@ trait InteractWithGlobalSearch
         return class_basename(static::class);
     }
 
-    public function getSearchTitle() {
-
-    }
-
-    public function getSearchResult(array $formatted): GlobalSearchResult
+    public function getSearchResult(array $hit): GlobalSearchResult
     {
         return new GlobalSearchResult(
-            title: 'test',
-            url: 'test',
+            title: $this->getSearchTitle($hit),
+            url: $this->getSearchUrl($hit),
         );
     }
 
@@ -38,7 +34,7 @@ trait InteractWithGlobalSearch
 
     public static function getHighlightPreTag(): string
     {
-        return '<strong>';
+        return '<strong class="font-extrabold">';
     }
 
     public static function getHighlightPostTag(): string

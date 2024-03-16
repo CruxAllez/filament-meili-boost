@@ -57,7 +57,18 @@ class MeiliGlobalSearchProvider implements GlobalSearchProvider
             $builder->category($group, $results);
         }
 
-        $models = $this->getSearchAbleModels($alreadySearchedModels);
+        $this->getSearchAbleModels($alreadySearchedModels)
+        ->each(function (string $model) use ($query, $builder) {
+            $model = $this->modelNamespacePrefix() . $model;
+            $results = $this->_getResultsForModel($model, $query, null);
+            if (count($results) <= 0) {
+                return;
+            }
+
+            /** @var HasGlobalSearch $model */
+            $group = $model::getGlobalSearchGroupName() ?? $model::getGlobalSearchGroupName();
+            $builder->category($group, $results);
+        });
 
         return $builder;
     }
@@ -113,11 +124,11 @@ class MeiliGlobalSearchProvider implements GlobalSearchProvider
      * @return array
      * @throws \ReflectionException
      */
-    private function _getResultsForModel(string $model, string $query, string $resource): array
+    private function _getResultsForModel(string $model, string $query, string|null $resource): array
     {
         $modelReflection = new \ReflectionClass($model);
         if (!($modelReflection->implementsInterface(HasGlobalSearch::class))) {
-            throw new \Exception('The ' . $model . ' must implement the HasGlobalSearch interface.');
+            return [];
         }
 
         /** @var HasGlobalSearch $model */
