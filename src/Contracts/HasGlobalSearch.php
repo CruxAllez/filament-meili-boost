@@ -4,6 +4,7 @@ namespace CruxAllez\FilamentMeiliBoost\Contracts;
 
 use Filament\GlobalSearch\GlobalSearchResult;
 use Laravel\Scout\Builder;
+use Meilisearch\Endpoints\Indexes;
 
 interface HasGlobalSearch
 {
@@ -13,5 +14,7 @@ interface HasGlobalSearch
 
     public function getSearchResult(array $formatted): GlobalSearchResult;
 
-    public static function meiliCallback($meiliSearch, string $query, array $options);
+    public static function meiliCallback(Indexes $meiliSearch, string $query, array $options): array|\Meilisearch\Search\SearchResult;
+
+    public static function getResultProvider(): string;
 }

@@ -2,6 +2,7 @@
 
 namespace CruxAllez\FilamentMeiliBoost\Traits;
 
+use CruxAllez\FilamentMeiliBoost\Providers\DefaultResultsProvider;
 use Filament\GlobalSearch\GlobalSearchResult;
 use Laravel\Scout\Builder;
 use Meilisearch\Endpoints\Indexes;
@@ -26,7 +27,7 @@ trait InteractWithGlobalSearch
     {
         return new GlobalSearchResult(
             title: 'test',
-
+            url: 'test',
         );
     }
 
@@ -52,5 +53,11 @@ trait InteractWithGlobalSearch
         $options['highlightPostTag'] = self::getHighlightPostTag();
 
         return $meiliSearch->search($query, $options);
+    }
+
+    public static string $resultProvider = DefaultResultsProvider::class;
+
+    public static function getResultProvider(): string {
+        return static::$resultProvider;
     }
 }
