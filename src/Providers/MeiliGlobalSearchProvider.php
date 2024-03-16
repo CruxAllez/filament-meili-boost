@@ -2,19 +2,18 @@
 
 namespace CruxAllez\FilamentMeiliBoost\Providers;
 
+use CruxAllez\FilamentMeiliBoost\Contracts\HasGlobalSearch;
 use Filament\Facades\Filament;
 use Filament\GlobalSearch\Contracts\GlobalSearchProvider;
-use Filament\GlobalSearch\DefaultGlobalSearchProvider;
-use Filament\GlobalSearch\GlobalSearchResult;
 use Filament\GlobalSearch\GlobalSearchResults;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
 
 class MeiliGlobalSearchProvider implements GlobalSearchProvider
 {
-
-    //
-
+    /**
+     * @throws \Exception
+     */
     public function getResults(string $query): ?GlobalSearchResults
     {
         $resources = collect(Filament::getResources())
@@ -25,7 +24,6 @@ class MeiliGlobalSearchProvider implements GlobalSearchProvider
 
         $builder = GlobalSearchResults::make();
 
-
         foreach ($resources as $resource) {
             /** @var Resource $resource */
             /** @var Model $model */
@@ -34,34 +32,34 @@ class MeiliGlobalSearchProvider implements GlobalSearchProvider
             if (!method_exists($model, 'search')) {
                 $resourceResults = $resource::getGlobalSearchResults($query);
 
-                if (! $resourceResults->count()) {
+                if (!$resourceResults->count()) {
                     continue;
                 }
 
                 $builder->category($resource::getPluralModelLabel(), $resourceResults);
+                continue;
             }
 
+            if (!(app($model) instanceof HasGlobalSearch)) {
+                throw new \Exception('The ' . $model . ' must implement the HasGlobalSearch interface.');
+            }
 
-            $query = $model;
-
-
-            $meiliResults = $model::search(
+            /** @var HasGlobalSearch $model */
+            $scoutQuery = $model::search(
                 $query,
-                function ($meiliSearch, string $query, array $options) {
-                    $options['attributesToHighlight'] = ['*'];
-                    $options['highlightPreTag'] = '<strong>';
-                    $options['highlightPostTag'] = '</strong>';
+                fn ($meiliSearch, string $query, array $options) => $model::meiliCallback($meiliSearch, $query, $options)
+            );
 
-                    return $meiliSearch->search($query, $options);
-                }
-            )->raw();
+            $scoutQuery = $model::modifyMeiliSearchQuery($scoutQuery, $query);
 
-            dd($model, $meiliResults, $meiliResults );
+            $results = $scoutQuery->raw();
+
+            dd($model, $results);
         }
 
-        $result = new GlobalSearchResult(title: 'test', url: 'test');
+        /*$result = new GlobalSearchResult(title: 'test', url: 'test');
 
-        $builder->category('Tickets', [$result]);
+        $builder->category('Tickets', [$result]);*/
 
         return $builder;
     }
